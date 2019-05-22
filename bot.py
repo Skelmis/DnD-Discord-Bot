@@ -13,6 +13,10 @@ import platform
 import random
 import pathlib
 from pathlib import Path
+import numpy as np
+import re
+import base64
+
 cwd = Path(__file__).parents[0]
 print(cwd)
 
@@ -30,6 +34,7 @@ botVersion = "0.1"
 
 @bot.event
 async def on_ready():
+    bot.config_token = bot.config_token.encode("cp037", "replace")
     print('------')
     print('Logged in as')
     print(bot.user.name)
@@ -41,6 +46,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    if message.channel.id == 503773157962809344:
+        if "accept" in message.clean_content.lower():
     #if bot.config_prefix in message:
     #    await message.add_reaction('👀') # :eyes:
     await bot.process_commands(message)
@@ -68,7 +75,6 @@ async def on_command_completion(ctx):
     count += 1
     data['cc'] = count
     write_json(data, 'secrets')
-
 
 @bot.command()
 async def echo(ctx,*,msg='e'):
@@ -129,48 +135,45 @@ async def check_permissions(ctx, member: discord.Member=None):
 
 @bot.command()
 async def embed(ctx, *, content:str):
-
-    # Usage: (prefix)embed <your message>
-
-    embed = discord.Embed(
-        description = content,
-        color = discord.Color.orange()
-    );
-
-    embed.set_footer(text = 'ID: ' + str(ctx.author.id));
-    embed.set_author(name = str(ctx.author), icon_url = str(ctx.author.avatar_url));
-
+    embed = discord.Embed(description = content, color = discord.Color.orange())
+    embed.set_footer(text = 'ID: ' + str(ctx.author.id))
+    embed.set_author(name = str(ctx.author), icon_url = str(ctx.author.avatar_url))
     await ctx.send(embed = embed);
+
+
 
 
 
 #custom commands - The Wheel
 @bot.command()#for times loop, random(1, sides). multiplier
-async def roll(ctx, times=0, sides=0, add=0):
+async def roll(ctx, times=0, sides=0, *, args=None):
     member = ctx.author
     times = int(times)
     sides = int(sides)
-    add = int(add)
-    embed = discord.Embed(title='Roll:', description='\uFEFF', colour=member.colour)
+    try:
+        num = re.sub('[^\d.,]' , '', str(args))
+        add = int(num)
+    except:
+        add = 0
     if times == 0 or  sides == 0:
         await ctx.send("Yo bro you need to specify the parts I use\n `roll (how many times) (how many sided dice) (modifier)`")
     else:
-        total = 0
-        calcNum = ""
-        for x in range(times):
-            sideNum = random.randint(1, sides)
-            total = total + sideNum
-            if calcNum == "":
-                sideNum = str(sideNum)
-                calcNum = f"{sideNum}"
+        try:
+            if 'disadv' in str(args.lower()):
+                embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
+                result = disadvantageRoll(times, sides, add)
+                embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+            elif 'adv' in str(args.lower()):
+                embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
+                result = advantageRoll(times, sides, add)
+                embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
             else:
-                sideNum = str(sideNum)
-                calcNum = f"{calcNum} + {sideNum}"
-        total = total + add
-        if add == 0:
-            embed.add_field(name=f'The total is: **{total}**', value=f'{calcNum}')
-        else:
-            print("Hi")
+                embed = discord.Embed(title='Roll:', description='Roll Type: Normal', colour=member.colour)
+                result = roll(times, sides, add)
+                embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+        except:
+            embed = discord.Embed(title='Roll:', description='Roll Type: **ERROR**', colour=member.colour)
+            embed.add_field(name='**ERROR**', value='\uFEFF')
         embed.set_author(icon_url=member.avatar_url, name=str(member))
         await ctx.send(embed=embed)
 
@@ -199,10 +202,91 @@ async def skillset(ctx, skill=None, change=None):
         await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)`")
 
 
+@bot.command()
+async def test(ctx):
+    member = ctx.author
+    result = disadvantageRoll(5,15,15)
+    embed = discord.Embed(title='Roll:', description='*Disadvantage*', colour=member.colour)
+    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+    embed.set_author(icon_url=member.avatar_url, name=str(member))
+    await ctx.send(embed=embed)
 
-
+@bot.command()
+async def accept(ctx, member: discord.Member, *args):
+    if "accept" in args:
+        role = discord.utils.get(member.guild.roles, name="Members")
+        await member.add_roles(role)
+        await ctx.message.delete()
+        removerole = discord.utils.get(member.guild.roles, name="Unverified")
+        await member.remove_roles(removerole)
+    else:
+        ctx.message.delete()
 
 #functions
+def roll(times, sides, add):
+    total = 0
+    calcNum = ""
+    for x in range(times):
+        sideNum = random.randint(1, sides)
+        total = total + sideNum
+        if calcNum == "":
+            sideNum = str(sideNum)
+            calcNum = f"{sideNum}"
+        else:
+            sideNum = str(sideNum)
+            calcNum = f"{calcNum} + {sideNum}"
+    calcNum = f"{calcNum} + ({add})"
+    total = total + add
+    return str(total), calcNum
+
+def disadvantageRoll(times, sides, add):
+    a = []
+    b = []
+    for i in range(2):
+        total = 0
+        calcNum = ""
+        for x in range(times):
+            sideNum = random.randint(1, sides)
+            total = total + sideNum
+            if calcNum == "":
+                sideNum = str(sideNum)
+                calcNum = f"{sideNum}"
+            else:
+                sideNum = str(sideNum)
+                calcNum = f"{calcNum} + {sideNum}"
+        calcNum = f"{calcNum} + ({add})"
+        total = total + add
+        a.append(total)
+        b.append(calcNum)
+    lowRoll = min(a)
+    ind = np.argmin(a)
+    lowRollMath = b[ind]
+    return str(lowRoll), lowRollMath
+
+def advantageRoll(times, sides, add):
+    a = []
+    b = []
+    for i in range(2):
+        total = 0
+        calcNum = ""
+        for x in range(times):
+            sideNum = random.randint(1, sides)
+            total = total + sideNum
+            if calcNum == "":
+                sideNum = str(sideNum)
+                calcNum = f"{sideNum}"
+            else:
+                sideNum = str(sideNum)
+                calcNum = f"{calcNum} + {sideNum}"
+        calcNum = f"{calcNum} + ({add})"
+        total = total + add
+        a.append(total)
+        b.append(calcNum)
+    highRoll = max(a)
+    ind = np.argmax(a)
+    highRollMath = b[ind]
+    return str(highRoll), highRollMath
+
 def addspace(n):
     w = ''
     for x in range(0, n):
@@ -284,4 +368,5 @@ if __name__ == '__main__':
             print("Loaded extension {}".format(extension))
         except Exception as error:
             print('{} cannont be loaded. [{}]'.format(extension, error))
+    bot.config_token = bot.config_token.swapcase()
     bot.run(bot.config_token)
