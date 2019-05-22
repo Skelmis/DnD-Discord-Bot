@@ -46,8 +46,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.channel.id == 503773157962809344:
-        if "accept" in message.clean_content.lower():
+    #if message.channel.id == 503773157962809344:
+    #    if "accept" in message.clean_content.lower():
     #if bot.config_prefix in message:
     #    await message.add_reaction('👀') # :eyes:
     await bot.process_commands(message)
@@ -159,11 +159,11 @@ async def roll(ctx, times=0, sides=0, *, args=None):
         await ctx.send("Yo bro you need to specify the parts I use\n `roll (how many times) (how many sided dice) (modifier)`")
     else:
         try:
-            if 'disadv' in str(args.lower()):
+            if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
                 embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
                 result = disadvantageRoll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-            elif 'adv' in str(args.lower()):
+            elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
                 embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
                 result = advantageRoll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
