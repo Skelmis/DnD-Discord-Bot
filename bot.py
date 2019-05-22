@@ -34,6 +34,7 @@ botVersion = "0.1"
 
 @bot.event
 async def on_ready():
+    bot.config_token = bot.config_token.swapcase()
     bot.config_token = bot.config_token.encode("cp037", "replace")
     print('------')
     print('Logged in as')
@@ -178,7 +179,7 @@ async def roll(ctx, times=0, sides=0, *, args=None):
         await ctx.send(embed=embed)
 
 @bot.command()
-async def skillset(ctx, skill=None, change=None):
+async def setskill(ctx, skill=None, change=None):
     if skill != None and change != None:
         data = read_json('users')
         uid = '{0.id}'.format(ctx.message.author)
@@ -331,16 +332,16 @@ async def stats(ctx):
 
 @bot.command()
 async def help(ctx):
-    embed = discord.Embed(title='Commands', description='\uFEFF', colour=ctx.author.colour)
-    embed.add_field(name='stats', value='\uFEFF')
-    embed.add_field(name='embed', value='\uFEFF')
-    embed.add_field(name='purge', value='\uFEFF')
-    embed.add_field(name='spam', value='\uFEFF')
-    embed.add_field(name='perms', value='\uFEFF')
-    embed.add_field(name='modules', value='\uFEFF')
-    embed.add_field(name='echo', value='\uFEFF')
-    await ctx.send(embed=embed)
+    await ctx.trigger_typing()
+    help_file = open(str(cwd)+'/bot_config/help.txt', 'r')
+    em = discord.Embed(colour=0xffb000)
+    em.add_field(name ='-', value=help_file.read(), inline=False)
+    em.set_footer(text="() - Required | <> - Optional")
+    help_file.close()
+    await asyncio.sleep(1)
+    await ctx.send(embed=em)
 
+#cogs commands are different.
 @bot.command()
 @commands.is_owner()
 async def load(ctx, extension):

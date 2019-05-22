@@ -1,0 +1,38 @@
+__**Current Commands**__
+
+:gear: ``help``
+- Shows this help message.
+
+:gear: ``stats``
+- Shows some bot stats
+
+:gear: ``echo``
+- Repeats your message
+- echo (message)
+
+:gear: ``purge``
+- Purge chats
+- purge (number of messages)
+- *Requires role: `Config`*
+
+:gear: ``modules``
+- List all cogs
+
+:gear: ``perms``
+- List a users permissions
+- perms <user>
+
+:gear: ``roll``
+- Roll the dice
+- roll (times) (dice sides) <multiplier/advantage/disadvantage>
+
+:gear: ``setskill``
+- Set values for your skills
+- setskill (skill name) (value/changes)
+
+:gear: ``embed``
+- Embed your own custom message.
+- embed (message)
+
+__Experiencing any problems?__
+Pm issues to Skelmis#9125
