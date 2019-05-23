@@ -1,21 +1,20 @@
-import discord
-from discord.ext import commands
+import discord #required
+from discord.ext import commands #required
 from aiohttp import ClientSession
 import aiohttp
 import asyncio
-import async_timeout
-import os
-import json
-import math
-import datetime
-import sys
-import platform
-import random
-import pathlib
-from pathlib import Path
+import os #replaced by pathlib?
+import json #for jsons
+import math #math functions
+import datetime #for date/time stuff
+import sys #stats
+import platform #stats
+import random #random numbers
+import pathlib #path stuff
+from pathlib import Path #getting paths
 import numpy as np
-import re
-import base64
+import re #regex stuff
+import base64  #encoding stuff
 
 cwd = Path(__file__).parents[0]
 print(cwd)
@@ -65,8 +64,13 @@ async def on_message(message):
 
 @bot.event
 async def on_command_error(ctx, error):
+    print(ctx, error)
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send('This command is on a `%.2fs` cooldown' % error.retry_after)
+    elif isinstance(error, commands.CheckFailure):
+        await ctx.send("This commands failed a check :/")
+    elif isinstance(error, commands.BotMissingPermissions):
+        await ctx.send("FUck")
     raise error  # re-raise the error so all the errors will still show up in console
 
 @bot.event
@@ -77,7 +81,34 @@ async def on_command_completion(ctx):
     data['cc'] = count
     write_json(data, 'secrets')
 
+#@bot.command(name='eval')
+#@commands.is_owner()
+#async def _eval(ctx, *, code):
+#    """A bad example of an eval command"""
+#    await ctx.send(eval(code))
+
 @bot.command()
+async def react(ctx):
+    botmsg = await ctx.send('Are you sure?')
+    await botmsg.add_reaction('👍')
+    await botmsg.add_reaction('👎')
+    channel = ctx.channel
+    mlg = await channel.history().get(author=bot.user)
+    print(mlg)
+    await asyncio.sleep(5)
+    cache_msg = discord.utils.get(mlg, id=botmsg.id)
+    #cache_msg.reactions
+    for item in cache_msg.reactions:
+            print(item)
+
+    #users = await reaction.users().flatten()
+    # users is now a list...
+    #winner = random.choice(users)
+    #await ctx.send(users)
+    #await channel.send('{} has won the raffle.'.format(winner))
+
+@bot.command()
+@commands.has_any_role('Config')
 async def echo(ctx,*,msg='e'):
     if msg == 'e':
         await ctx.send("Please enter text to echo after the command")
@@ -332,14 +363,15 @@ async def stats(ctx):
 
 @bot.command()
 async def help(ctx):
-    await ctx.trigger_typing()
+    member = ctx.author
+    await member.trigger_typing()
     help_file = open(str(cwd)+'/bot_config/help.txt', 'r')
     em = discord.Embed(colour=0xffb000)
     em.add_field(name ='-', value=help_file.read(), inline=False)
     em.set_footer(text="() - Required | <> - Optional")
     help_file.close()
     await asyncio.sleep(1)
-    await ctx.send(embed=em)
+    await member.send(embed=em)
 
 #cogs commands are different.
 @bot.command()

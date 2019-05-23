@@ -25,6 +25,7 @@ __**Current Commands**__
 :gear: ``roll``
 - Roll the dice
 - roll (times) (dice sides) <multiplier/advantage/disadvantage>
+- E.g. !roll 10d20 is now !roll 10 20
 
 :gear: ``setskill``
 - Set values for your skills
