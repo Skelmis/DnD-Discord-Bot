@@ -176,6 +176,7 @@ async def embed(ctx, *, content:str):
 
 
 
+
 #custom commands - The Wheel
 @bot.command()#for times loop, random(1, sides). multiplier
 async def roll(ctx, times=0, sides=0, *, args=None):
@@ -209,8 +210,8 @@ async def roll(ctx, times=0, sides=0, *, args=None):
         embed.set_author(icon_url=member.avatar_url, name=str(member))
         await ctx.send(embed=embed)
 
-@bot.command()
-async def setskill(ctx, skill=None, change=None, type="normal"):
+@bot.command(name='setskill', aliases=["skillset"])
+async def _setskill(ctx, skill=None, change=None, type="normal"):
     if 'disadv' in str(type.lower()) or 'disadvantage' in str(type.lower()):
         type = "disadvantage"
     elif 'adv' in str(type.lower()) or 'advantage' in str(type.lower()):
@@ -265,7 +266,7 @@ async def setskill(ctx, skill=None, change=None, type="normal"):
         embed.set_author(icon_url=member.avatar_url, name=str(member))
         await ctx.send(embed=embed)
     else:
-        await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)` `skill type - optional`")
+        await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)` `(skill type - optional)`")
         await ctx.send(f"If you would like to see your current saved skills please use {bot.config_prefix}skills")
 
 @bot.command()
@@ -278,9 +279,42 @@ async def skills(ctx):
             for skill in data[did][uid]:
                 await ctx.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
         else:
-            await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+            await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot show your skills :shrug:")
     else:
         await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+
+@bot.command(name='rollskill', aliases=['skillroll'])
+async def _rollskill(ctx, skill=None):
+    data = read_json('users')
+    uid = '{0.id}'.format(ctx.message.author)
+    did = '{}'.format(ctx.message.guild.id)
+    if did in data:#if the discord is already in data
+        if uid in data[did]:
+            if skill in data[did][uid]:
+                skillName = skill
+                skillValue = data[did][uid][skill]['value']
+                skillType = data[did][uid][skill]['type']
+            else:
+                await ctx.send(f"Im sorry, you do not have a skill called {skill}.\nIf you wish to see what skills you do have please run {bot.config_prefix}skills")
+        else:
+            await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot roll your skills :shrug:")
+    else:
+        await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+    try:
+        if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
+            embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
+            result = disadvantageRoll(times, sides, add)
+            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+        elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
+            embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
+            result = advantageRoll(times, sides, add)
+            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+        else:
+            embed = discord.Embed(title='Roll:', description='Roll Type: Normal', colour=member.colour)
+            result = roll(times, sides, add)
+            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+    except:
+        await ctx.send("Exception raised.:shrug:")
 
 @bot.command()
 async def test(ctx):

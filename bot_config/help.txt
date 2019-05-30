@@ -34,6 +34,9 @@ __**Current Commands**__
 :gear: ``skills``
 - Shows all your stored skills
 
+:gear: ``rollskill``
+- Roll a certain skill
+
 :gear: ``embed``
 - Embed your own custom message.
 - embed (message)
