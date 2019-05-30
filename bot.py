@@ -12,7 +12,7 @@ import platform #stats
 import random #random numbers
 import pathlib #path stuff
 from pathlib import Path #getting paths
-import numpy as np
+import numpy as np #getting min/max stuff
 import re #regex stuff
 import base64  #encoding stuff
 
@@ -29,7 +29,7 @@ bot.config_prefix = config_file[did]['prefix']
 bot.config_token = secret_file['token']
 extensions = []
 
-botVersion = "0.1"
+botVersion = "0.2"
 
 @bot.event
 async def on_ready():
@@ -210,7 +210,13 @@ async def roll(ctx, times=0, sides=0, *, args=None):
         await ctx.send(embed=embed)
 
 @bot.command()
-async def setskill(ctx, skill=None, change=None):
+async def setskill(ctx, skill=None, change=None, type="normal"):
+    if 'disadv' in str(type.lower()) or 'disadvantage' in str(type.lower()):
+        type = "disadvantage"
+    elif 'adv' in str(type.lower()) or 'advantage' in str(type.lower()):
+        type = "advantage"
+    else:
+        type = "normal"
     if skill != None and change != None:
         data = read_json('users')
         uid = '{0.id}'.format(ctx.message.author)
@@ -218,21 +224,63 @@ async def setskill(ctx, skill=None, change=None):
         name = '{}'.format(ctx.message.author)
         if did in data:#if the discord is already in data
             if uid in data[did]:
-                data[did][uid][f'{skill}'] = change
+                if skill in data[did][uid]:
+                    data[did][uid][f'{skill}']['value'] = change
+                    data[did][uid][f'{skill}']['type'] = type
+                else:
+                    data[did][uid][skill] = {}
+                    data[did][uid][f'{skill}']['value'] = change
+                    data[did][uid][f'{skill}']['type'] = type
             else:
                 data[did][uid] = {}
-                data[did][uid][f'{skill}'] = change
+                if skill in data[did][uid]:
+                    data[did][uid][f'{skill}']['value'] = change
+                    data[did][uid][f'{skill}']['type'] = type
+                else:
+                    data[did][uid][skill] = {}
+                    data[did][uid][f'{skill}']['value'] = change
+                    data[did][uid][f'{skill}']['type'] = type
         else:#if the discord isnt in the data
                 data[did] = {}
                 if uid in data[did]:
-                    data[did][uid][f'{skill}'] = change
+                    if skill in data[did][uid]:
+                        data[did][uid][f'{skill}']['value'] = change
+                        data[did][uid][f'{skill}']['type'] = type
+                    else:
+                        data[did][uid][skill] = {}
+                        data[did][uid][f'{skill}']['value'] = change
+                        data[did][uid][f'{skill}']['type'] = type
                 else:
                     data[did][uid] = {}
-                    data[did][uid][f'{skill}'] = change
+                    if skill in data[did][uid]:
+                        data[did][uid][f'{skill}']['value'] = change
+                        data[did][uid][f'{skill}']['type'] = type
+                    else:
+                        data[did][uid][skill] = {}
+                        data[did][uid][f'{skill}']['value'] = change
+                        data[did][uid][f'{skill}']['type'] = type
         write_json(data, 'users')
+        member = ctx.author
+        embed = discord.Embed(title='Skill Data Changed:', description=f'Skill: `{skill}`\nSkill Value: `{change}`\nSkill Type: `{type}`', colour=member.colour)
+        embed.set_author(icon_url=member.avatar_url, name=str(member))
+        await ctx.send(embed=embed)
     else:
-        await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)`")
+        await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)` `skill type - optional`")
+        await ctx.send(f"If you would like to see your current saved skills please use {bot.config_prefix}skills")
 
+@bot.command()
+async def skills(ctx):
+    uid = '{0.id}'.format(ctx.message.author)
+    did = '{}'.format(ctx.message.guild.id)
+    data = read_json('users')
+    if did in data:#if the discord is already in data
+        if uid in data[did]:
+            for skill in data[did][uid]:
+                await ctx.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
+        else:
+            await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+    else:
+        await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
 
 @bot.command()
 async def test(ctx):

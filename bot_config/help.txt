@@ -29,7 +29,10 @@ __**Current Commands**__
 
 :gear: ``setskill``
 - Set values for your skills
-- setskill (skill name) (value/changes)
+- setskill (skill name) (value/changes) (type)
+
+:gear: ``skills``
+- Shows all your stored skills
 
 :gear: ``embed``
 - Embed your own custom message.
