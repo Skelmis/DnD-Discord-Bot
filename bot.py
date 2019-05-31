@@ -273,48 +273,64 @@ async def _setskill(ctx, skill=None, change=None, type="normal"):
 async def skills(ctx):
     uid = '{0.id}'.format(ctx.message.author)
     did = '{}'.format(ctx.message.guild.id)
+    member = ctx.author
     data = read_json('users')
-    if did in data:#if the discord is already in data
-        if uid in data[did]:
-            for skill in data[did][uid]:
-                await ctx.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
+    try:
+        if did in data:#if the discord is already in data
+            if uid in data[did]:
+                for skill in data[did][uid]:
+                    await member.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
+                    msg = await ctx.send(f"Hey <@{uid}>, please check your dms from me")
+                    await asyncio.sleep(10)
+                    await ctx.message.delete()
+                    await msg.delete()
+            else:
+                await member.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot show your skills :shrug:")
         else:
-            await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot show your skills :shrug:")
-    else:
-        await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+            await member.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+    except:
+        await ctx.send(f"Hey <@{uid}>, it appears this command failed. I assume its due to me not being able to dm you so please open your dms :)")
+        await asyncio.sleep(10)
+        await ctx.message.delete()
+        await msg.delete()
 
 @bot.command(name='rollskill', aliases=['skillroll'])
-async def _rollskill(ctx, skill=None):
+async def _rollskill(ctx, skill=None, type=None):
     data = read_json('users')
     uid = '{0.id}'.format(ctx.message.author)
     did = '{}'.format(ctx.message.guild.id)
+    member = ctx.author
     if did in data:#if the discord is already in data
         if uid in data[did]:
             if skill in data[did][uid]:
                 skillName = skill
                 skillValue = data[did][uid][skill]['value']
-                skillType = data[did][uid][skill]['type']
+                if not type:
+                    skillType = data[did][uid][skill]['type']
+                else:
+                    skillType = type
+                times = 1
+                sides = 20
+                add = int(skillValue)
+                if 'disadv' in str(skillType.lower()) or 'disadvantage' in str(skillType.lower()):
+                    embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
+                    result = disadvantageRoll(times, sides, add)
+                    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+                elif 'adv' in str(skillType.lower()) or 'advantage' in str(skillType.lower()):
+                    embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
+                    result = advantageRoll(times, sides, add)
+                    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+                else:
+                    embed = discord.Embed(title='Roll:', description='Roll Type: Normal', colour=member.colour)
+                    result = roll(times, sides, add)
+                    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+                await ctx.send(embed=embed)
             else:
                 await ctx.send(f"Im sorry, you do not have a skill called {skill}.\nIf you wish to see what skills you do have please run {bot.config_prefix}skills")
         else:
             await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot roll your skills :shrug:")
     else:
         await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
-    try:
-        if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
-            embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
-            result = disadvantageRoll(times, sides, add)
-            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-        elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
-            embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
-            result = advantageRoll(times, sides, add)
-            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-        else:
-            embed = discord.Embed(title='Roll:', description='Roll Type: Normal', colour=member.colour)
-            result = roll(times, sides, add)
-            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-    except:
-        await ctx.send("Exception raised.:shrug:")
 
 @bot.command()
 async def test(ctx):
@@ -454,6 +470,10 @@ async def help(ctx):
     help_file.close()
     await asyncio.sleep(1)
     await member.send(embed=em)
+    msg = await ctx.send(f"Hey {member.mention}, please check your dms from me")
+    await asyncio.sleep(10)
+    await ctx.message.delete()
+    await msg.delete()
 
 #cogs commands are different.
 @bot.command()
