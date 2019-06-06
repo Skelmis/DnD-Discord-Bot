@@ -64,13 +64,19 @@ async def on_message(message):
 
 @bot.event
 async def on_command_error(ctx, error):
-    print(ctx, error)
-    if isinstance(error, commands.CommandOnCooldown):
+    ignored = (commands.CommandNotFound)
+    if isinstance(error, ignored):
+        return
+    elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send('This command is on a `%.2fs` cooldown' % error.retry_after)
     elif isinstance(error, commands.CheckFailure):
         await ctx.send("This commands failed a check :/")
     elif isinstance(error, commands.BotMissingPermissions):
-        await ctx.send("FUck")
+        await ctx.send("I am missing permissions to do this...")
+    elif isinstance(error, commands.DisabledCommand):
+        await ctx.send(f'{ctx.command} has been disabled.')
+    channel = bot.get_channel(586147375781773312)
+    await channel.send(f"An error occured:\n{error}")
     raise error  # re-raise the error so all the errors will still show up in console
 
 @bot.event
@@ -163,6 +169,8 @@ async def check_permissions(ctx, member: discord.Member=None):
     # \uFEFF is a Zero-Width Space, which basically allows us to have an empty field name.
     embed.add_field(name='\uFEFF', value=perms)
     await ctx.send(content=None, embed=embed)
+    await asyncio.sleep(10)
+    await ctx.message.delete()
 
 
 @bot.command()
@@ -171,6 +179,8 @@ async def embed(ctx, *, content:str):
     embed.set_footer(text = 'ID: ' + str(ctx.author.id))
     embed.set_author(name = str(ctx.author), icon_url = str(ctx.author.avatar_url))
     await ctx.send(embed = embed);
+    await ctx.message.delete()
+
 
 
 
@@ -186,8 +196,11 @@ async def roll(ctx, times=0, sides=0, *, args=None):
     try:
         num = re.sub('[^\d.,]' , '', str(args))
         add = int(num)
+        print(num, add)
     except:
         add = 0
+    if not args:
+        args = "normal"
     if times == 0 or  sides == 0:
         await ctx.send("Yo bro you need to specify the parts I use\n `roll (how many times) (how many sided dice) (modifier)`")
     else:
@@ -209,6 +222,7 @@ async def roll(ctx, times=0, sides=0, *, args=None):
             embed.add_field(name='**ERROR**', value='\uFEFF')
         embed.set_author(icon_url=member.avatar_url, name=str(member))
         await ctx.send(embed=embed)
+        await ctx.message.delete()
 
 @bot.command(name='setskill', aliases=["skillset"])
 async def _setskill(ctx, skill=None, change=None, type="normal"):
@@ -265,34 +279,37 @@ async def _setskill(ctx, skill=None, change=None, type="normal"):
         embed = discord.Embed(title='Skill Data Changed:', description=f'Skill: `{skill}`\nSkill Value: `{change}`\nSkill Type: `{type}`', colour=member.colour)
         embed.set_author(icon_url=member.avatar_url, name=str(member))
         await ctx.send(embed=embed)
+        await ctx.message.delete()
     else:
-        await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)` `(skill type - optional)`")
-        await ctx.send(f"If you would like to see your current saved skills please use {bot.config_prefix}skills")
+        msg1 = await ctx.send("I need you to do the command like so....\n `skillset (the skill) (what I should set it to)` `(skill type - optional)`")
+        msg2 = await ctx.send(f"If you would like to see your current saved skills please use {bot.config_prefix}skills")
+        await ctx.message.delete()
+        await asyncio.sleep(10)
+        await msg1.delete()
+        await msg2.delete()
 
 @bot.command()
+@commands.guild_only()
 async def skills(ctx):
     uid = '{0.id}'.format(ctx.message.author)
     did = '{}'.format(ctx.message.guild.id)
     member = ctx.author
     data = read_json('users')
-    try:
-        if did in data:#if the discord is already in data
-            if uid in data[did]:
-                for skill in data[did][uid]:
-                    await member.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
-                    msg = await ctx.send(f"Hey <@{uid}>, please check your dms from me")
-                    await asyncio.sleep(10)
-                    await ctx.message.delete()
-                    await msg.delete()
-            else:
-                await member.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot show your skills :shrug:")
+    if did in data:#if the discord is already in data
+        if uid in data[did]:
+            for skill in data[did][uid]:
+                await member.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
+                msg = await ctx.send(f"Hey <@{uid}>, please check your dms from me")
+                await asyncio.sleep(10)
+                await ctx.message.delete()
+                await msg.delete()
         else:
-            await member.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
-    except:
-        await ctx.send(f"Hey <@{uid}>, it appears this command failed. I assume its due to me not being able to dm you so please open your dms :)")
-        await asyncio.sleep(10)
-        await ctx.message.delete()
-        await msg.delete()
+            msg = await member.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot show your skills :shrug:")
+    else:
+        msg = await member.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+    await ctx.message.delete()
+    await asyncio.sleep(10)
+    await msg.delete()
 
 @bot.command(name='rollskill', aliases=['skillroll'])
 async def _rollskill(ctx, skill=None, type=None):
@@ -326,13 +343,17 @@ async def _rollskill(ctx, skill=None, type=None):
                     embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
                 await ctx.send(embed=embed)
             else:
-                await ctx.send(f"Im sorry, you do not have a skill called {skill}.\nIf you wish to see what skills you do have please run {bot.config_prefix}skills")
+                msg = await ctx.send(f"Im sorry, you do not have a skill called {skill}.\nIf you wish to see what skills you do have please run {bot.config_prefix}skills")
         else:
-            await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot roll your skills :shrug:")
+            msg = await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot roll your skills :shrug:")
     else:
-        await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+        msg = await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+    await ctx.message.delete()
+    await asyncio.sleep(10)
+    await msg.delete()
 
 @bot.command()
+@commands.is_owner()
 async def test(ctx):
     member = ctx.author
     result = disadvantageRoll(5,15,15)
@@ -342,6 +363,7 @@ async def test(ctx):
     await ctx.send(embed=embed)
 
 @bot.command()
+@commands.is_owner()
 async def accept(ctx, member: discord.Member, *args):
     if "accept" in args:
         role = discord.utils.get(member.guild.roles, name="Members")
@@ -458,6 +480,7 @@ async def stats(ctx):
     embed.set_footer(text="Carpe Noctem | {} | Nerd Cave Development".format(bot.user.name))
     embed.set_author(name = str(bot.user.name), icon_url = str(bot.user.avatar_url))
     await ctx.send(embed = embed)
+    await ctx.message.delete()
 
 @bot.command()
 async def help(ctx):
