@@ -19,11 +19,21 @@ import base64  #encoding stuff
 cwd = Path(__file__).parents[0]
 print(cwd)
 
+def get_prefix(bot, message):
+    if not message.guild:
+        return commands.when_mentioned_or("!")(bot, message)
+    data = read_json('config')
+    did = '{}'.format(message.guild.id)
+    if did not in data:
+        return commands.when_mentioned_or("!")(bot, message)
+    prefix = data[did]['prefix']
+    return commands.when_mentioned_or(prefix)(bot, message)
+
 config_file = json.load(open(str(cwd)+'/bot_config/config.json'))
 secret_file = json.load(open(str(cwd)+'/bot_config/secrets.json'))
 did = "12345"
 prefix = config_file[did]['prefix']
-bot = commands.Bot(command_prefix=prefix, owner_id=271612318947868673)
+bot = commands.Bot(command_prefix=get_prefix, owner_id=271612318947868673)
 bot.remove_command('help')
 bot.config_prefix = config_file[did]['prefix']
 bot.config_token = secret_file['token']
@@ -92,6 +102,24 @@ async def on_command_completion(ctx):
 #async def _eval(ctx, *, code):
 #    """A bad example of an eval command"""
 #    await ctx.send(eval(code))
+
+@bot.command()
+async def prefix(ctx, *, pre):
+    '''Set a custom prefix for the guild.'''
+    #try find prefix for this server in existing data using result = data[etc etc]
+    uid = '{0.id}'.format(ctx.message.author)
+    did = '{}'.format(ctx.message.guild.id)
+    data = read_json('config')
+    if not did in data:
+        #create new area for that discord then store guild prefix
+        data[did] = {}
+        data[did]['prefix'] = str(pre)
+        write_json(data, 'config')
+        return await ctx.send(f'The guild prefix has been set to `{pre}` Use `{pre}prefix <prefix>` to change it again.')
+    data[did]['prefix'] = str(pre)
+    #update json file for that discord
+    write_json(data, 'config')
+    await ctx.send(f'The guild prefix has been set to `{pre}` Use `{pre}prefix <prefix>` to change it again.')
 
 @bot.command()
 async def react(ctx):
@@ -183,7 +211,18 @@ async def embed(ctx, *, content:str):
 
 
 
-
+@bot.command()
+async def rolltest(ctx, time):
+    print(time[0])
+    easy = []
+    tf = []
+    for char in time:
+        easy.append(str(char.lower()))
+    print(easy)
+    for i in time:
+        if time[i] == "d":
+            tf = time[0:i-1]
+            print(tf)
 
 
 
@@ -196,7 +235,9 @@ async def roll(ctx, times=0, sides=0, *, args=None):
     try:
         num = re.sub('[^\d.,]' , '', str(args))
         add = int(num)
-        print(num, add)
+        if "-" in args:
+            add = "-"+ str(add)
+            add = int(add)
     except:
         add = 0
     if not args:
@@ -206,15 +247,15 @@ async def roll(ctx, times=0, sides=0, *, args=None):
     else:
         try:
             if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
-                embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Disadvantage', colour=member.colour)
                 result = disadvantageRoll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
             elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
-                embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Advantage', colour=member.colour)
                 result = advantageRoll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
             else:
-                embed = discord.Embed(title='Roll:', description='Roll Type: Normal', colour=member.colour)
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Normal', colour=member.colour)
                 result = roll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
         except:
@@ -297,12 +338,10 @@ async def skills(ctx):
     data = read_json('users')
     if did in data:#if the discord is already in data
         if uid in data[did]:
+            await member.send(f"Here are your skills for the discord: (`{ctx.message.guild}`).")
             for skill in data[did][uid]:
                 await member.send(f"Skill: `{skill}`. Skill value: `{data[did][uid][skill]['value']}`. Skill type: `{data[did][uid][skill]['type']}`.")
-                msg = await ctx.send(f"Hey <@{uid}>, please check your dms from me")
-                await asyncio.sleep(10)
-                await ctx.message.delete()
-                await msg.delete()
+            msg = await ctx.send(f"Hey <@{uid}>, please check your dms from me")
         else:
             msg = await member.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot show your skills :shrug:")
     else:
@@ -330,27 +369,32 @@ async def _rollskill(ctx, skill=None, type=None):
                 sides = 20
                 add = int(skillValue)
                 if 'disadv' in str(skillType.lower()) or 'disadvantage' in str(skillType.lower()):
-                    embed = discord.Embed(title='Roll:', description='Roll Type: Disadvantage', colour=member.colour)
+                    embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Skill: {skill}\nRoll Type: Disadvantage', colour=member.colour)
                     result = disadvantageRoll(times, sides, add)
                     embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
                 elif 'adv' in str(skillType.lower()) or 'advantage' in str(skillType.lower()):
-                    embed = discord.Embed(title='Roll:', description='Roll Type: Advantage', colour=member.colour)
+                    embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Skill: {skill}\nRoll Type: Advantage', colour=member.colour)
                     result = advantageRoll(times, sides, add)
                     embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
                 else:
-                    embed = discord.Embed(title='Roll:', description='Roll Type: Normal', colour=member.colour)
+                    embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Skill: {skill}\nRoll Type: Normal', colour=member.colour)
                     result = roll(times, sides, add)
                     embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+                embed.set_author(icon_url=member.avatar_url, name=str(member))
                 await ctx.send(embed=embed)
             else:
-                msg = await ctx.send(f"Im sorry, you do not have a skill called {skill}.\nIf you wish to see what skills you do have please run {bot.config_prefix}skills")
+                msg = await ctx.send(f"Im sorry, you do not have a skill called `{skill}`.\nIf you wish to see what skills you do have please run {bot.config_prefix}skills")
+                await asyncio.sleep(10)
+                await msg.delete()
         else:
             msg = await ctx.send(f"Hey <@{uid}>. Im sorry you (`{uid}`) don't exist within my data so I cannot roll your skills :shrug:")
+            await asyncio.sleep(10)
+            await msg.delete()
     else:
         msg = await ctx.send(f"Hey <@{uid}>. Im sorry either your discord (`{did}`), or you (`{uid}`), don't exist within my data so I cannot show your skills :shrug:")
+        await asyncio.sleep(10)
+        await msg.delete()
     await ctx.message.delete()
-    await asyncio.sleep(10)
-    await msg.delete()
 
 @bot.command()
 @commands.is_owner()
@@ -469,7 +513,11 @@ async def stats(ctx):
     userCount = 0
     for g in botServers:
         userCount += len(g.members)
-    embed = discord.Embed(title='{} Stats'.format(bot.user.name), description='\uFEFF', colour=ctx.author.colour)
+    try:
+        color = ctx.author.colour
+    except:
+        color = 0xffb000
+    embed = discord.Embed(title='{} Stats'.format(bot.user.name), description='\uFEFF', colour=color)
     embed.add_field(name='Bot Version:', value=botVersion)
     embed.add_field(name='Python Version:', value=pythonVersion)
     embed.add_field(name='Discord.Py Version', value=rewriteVersion)
