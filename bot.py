@@ -238,18 +238,73 @@ async def rolltest(ctx, time):
 @bot.command()#for times loop, random(1, sides). multiplier
 async def roll(ctx, times=None, sides=None, *, args=None):
     member = ctx.author
+    """easy = []
+    if "d" in times.lower():
+        print("One")
+        for char in times:
+            easy.append(str(char.lower()))
+        print(times, easy)
+        length = len(easy)
+        for i in range(length):
+            print("-----")
+            if str(easy[i].lower()) == 'd':
+                print("two")
+                for z in range(length):
+                    print("=====")
+                    if str(easy[z]) == '-' or str(easy[z]) == '+':
+                        print("threee")
+                        print("four")
+                        add = times[int(z+1):]
+                        print(times, add)
+                        sides = times[int(i+1):int(z)]
+                        print(times, sides)
+                        print("six")
+                        print(f"times:{times}, sides:{sides}, add:{add}")
+                        break
+                print("nope")
+                try:
+                    num = re.sub('[^\d.,]' , '', str(sides))
+                    add = int(num)
+                    if "-" in args:
+                        add = "-"+ str(add)
+                        add = int(add)
+                except:
+                    add = 0
+                sides = times[int(i+1):]
+                print(f"Here the sides num: {sides}")
+                print(times, sides)
+            times = times[:int(i)]
+            if not args:
+                args = "normal"""
     easy = []
+    bool = False
     if "d" in times.lower():
         for char in times:
             easy.append(str(char.lower()))
         length = len(easy)
+        for x in range(length):
+            if str(easy[x]) == '-' or str(easy[x]) == '+':
+                add = times[int(x+1):]
+                add = str(add)
+                add = easy[x] + add
+                add = int(add)
+                bool = True
+                break
+        if bool == False:
+            try:
+                num = re.sub('[^\d.,]' , '', str(sides))
+                add = int(num)
+                if "-" in sides:
+                    add = "-"+ str(add)
+                    add = int(add)
+            except:
+                add = 0
         for i in range(length):
             if str(easy[i].lower()) == 'd':
-                try:
-                    add = int(sides)
-                except:
-                    add = 0
-                sides = times[int(i+1):]
+                if bool == True:
+                    sides = times[int(i+1):int(x)]
+                else:
+                    sides = times[int(i+1):]
                 times = times[:int(i)]
                 if not args:
                     args = "normal"
@@ -276,22 +331,22 @@ async def roll(ctx, times=None, sides=None, *, args=None):
     if times == 0 or  sides == 0:
         await ctx.send("Yo bro you need to specify the parts I use\n `roll (how many times) (how many sided dice) (modifier)`")
     else:
-        #try:
-        if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
-            embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Disadvantage', colour=member.colour)
-            result = disadvantageRoll(times, sides, add)
-            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-        elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
-            embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Advantage', colour=member.colour)
-            result = advantageRoll(times, sides, add)
-            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-        else:
-            embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Normal', colour=member.colour)
-            result = roll(times, sides, add)
-            embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
-        #except:
-        #    embed = discord.Embed(title='Roll:', description='Roll Type: **ERROR**', colour=member.colour)
-        #    embed.add_field(name='**ERROR**', value='\uFEFF')
+        try:
+            if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Disadvantage', colour=member.colour)
+                result = disadvantageRoll(times, sides, add)
+                embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+            elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Advantage', colour=member.colour)
+                result = advantageRoll(times, sides, add)
+                embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+            else:
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Normal', colour=member.colour)
+                result = roll(times, sides, add)
+                embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+        except:
+            embed = discord.Embed(title='Roll:', description='Roll Type: **ERROR**', colour=member.colour)
+            embed.add_field(name='**ERROR**', value='\uFEFF')
         embed.set_author(icon_url=member.avatar_url, name=str(member))
         await ctx.send(embed=embed)
         #await ctx.message.delete()
