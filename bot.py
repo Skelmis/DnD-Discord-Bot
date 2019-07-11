@@ -238,44 +238,6 @@ async def rolltest(ctx, time):
 @bot.command()#for times loop, random(1, sides). multiplier
 async def roll(ctx, times=None, sides=None, *, args=None):
     member = ctx.author
-    """easy = []
-    if "d" in times.lower():
-        print("One")
-        for char in times:
-            easy.append(str(char.lower()))
-        print(times, easy)
-        length = len(easy)
-        for i in range(length):
-            print("-----")
-            if str(easy[i].lower()) == 'd':
-                print("two")
-                for z in range(length):
-                    print("=====")
-                    if str(easy[z]) == '-' or str(easy[z]) == '+':
-                        print("threee")
-                        print("four")
-                        add = times[int(z+1):]
-                        print(times, add)
-                        sides = times[int(i+1):int(z)]
-                        print(times, sides)
-                        print("six")
-                        print(f"times:{times}, sides:{sides}, add:{add}")
-                        break
-                print("nope")
-                try:
-                    num = re.sub('[^\d.,]' , '', str(sides))
-                    add = int(num)
-                    if "-" in args:
-                        add = "-"+ str(add)
-                        add = int(add)
-                except:
-                    add = 0
-                sides = times[int(i+1):]
-                print(f"Here the sides num: {sides}")
-                print(times, sides)
-            times = times[:int(i)]
-            if not args:
-                args = "normal"""
     easy = []
     bool = False
     if "d" in times.lower():
