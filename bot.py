@@ -295,15 +295,15 @@ async def roll(ctx, times=None, sides=None, *, args=None):
     else:
         try:
             if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
-                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Disadvantage', colour=member.colour)
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\nRoll Type: Disadvantage', colour=member.colour)
                 result = disadvantageRoll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
             elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
-                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Advantage', colour=member.colour)
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\nRoll Type: Advantage', colour=member.colour)
                 result = advantageRoll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
             else:
-                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\n Roll Type: Normal', colour=member.colour)
+                embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\nRoll Type: Normal', colour=member.colour)
                 result = roll(times, sides, add)
                 embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
         except:
