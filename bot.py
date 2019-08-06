@@ -39,7 +39,7 @@ bot.config_prefix = config_file[did]['prefix']
 bot.config_token = secret_file['token']
 extensions = []
 
-botVersion = "0.2"
+botVersion = "0.3"
 
 @bot.event
 async def on_ready():
@@ -209,30 +209,79 @@ async def embed(ctx, *, content:str):
     await ctx.send(embed = embed);
     await ctx.message.delete()
 
-
-
 @bot.command()
-async def rolltest(ctx, time):
-    easy = []
-    for char in time:
-        easy.append(str(char.lower()))
-    print(easy, len(easy))
-    length = len(easy)
-    for i in range(length):
-        print(i)
-        if str(easy[i].lower()) == 'd':
-            times = time[:int(i)]
-            sides = time[int(i+1):]
+async def rollbatch(ctx, *, times):
+    member = ctx.author
+    for i in range(2):
+        stuff = times
+        easy = []
+        bool = False
+        end = 0
+        args = None
+        end = False
+        print(stuff)
+        for char in times:
+            easy.append(str(char.lower()))
+        length = len(easy)
+        if i != 0:
+            for i in range(length):
+                if str(easy[i]) == ' ':
+                    end = i
+            times = stuff[new:]
+            print(times)
+
+        for x in range(length):
+            if str(easy[x]) == '-' or str(easy[x]) == '+':
+                for i in range(length):
+                    if str(easy[i]) == ' ':
+                        end = i
+                        #print(easy[:end])
+                add = times[int(x+1):int(end)]
+                print(add)
+                add = str(add)
+                add = easy[x] + add
+                print(add)
+                print("---")
+                add = int(add)
+                bool = True
+                break
+        for i in range(length):
+            if str(easy[i].lower()) == 'd':
+                if bool == True:
+                    sides = times[int(i+1):int(x)]
+                else:
+                    sides = times[int(i+1):int(end)]
+                times = times[:int(i)]
+                if not args:
+                    args = "normal"
+                times = int(times)
+                sides = int(sides)
+                break
+        new = int(end) + 1
+        print(stuff)
+        if times == 0 or  sides == 0:
+            await ctx.send("Yo bro you need to specify the parts I use\n `roll (how many times) (how many sided dice) (modifier)`")
+        else:
             try:
-                add = int(sides)
-                if "-" in sides:
-                    add = "-"+ str(add)
-                    add = int(add)
+                if 'disadv' in str(args.lower()) or 'disadvantage' in str(args.lower()):
+                    embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\nRoll Type: Disadvantage', colour=member.colour)
+                    result = disadvantageRoll(times, sides, add)
+                    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+                elif 'adv' in str(args.lower()) or 'advantage' in str(args.lower()):
+                    embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\nRoll Type: Advantage', colour=member.colour)
+                    result = advantageRoll(times, sides, add)
+                    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
+                else:
+                    embed = discord.Embed(title='Roll:', description=f'Rolled: {times}d{sides}\nRoll Type: Normal', colour=member.colour)
+                    result = roll(times, sides, add)
+                    embed.add_field(name=f'The total is: **{result[0]}**', value=f'{result[1]}')
             except:
-                add = 0
-            break
-
-
+                embed = discord.Embed(title='Roll:', description='Roll Type: **ERROR**', colour=member.colour)
+                embed.add_field(name='**ERROR**', value='\uFEFF')
+            embed.set_author(icon_url=member.avatar_url, name=str(member))
+            bool = False
+            print("One downs \n -----")
+        await ctx.send(embed=embed)
 
 #custom commands - The Wheel
 @bot.command()#for times loop, random(1, sides). multiplier
