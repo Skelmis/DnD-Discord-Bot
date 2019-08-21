@@ -33,7 +33,7 @@ config_file = json.load(open(str(cwd)+'/bot_config/config.json'))
 secret_file = json.load(open(str(cwd)+'/bot_config/secrets.json'))
 did = "12345"
 prefix = config_file[did]['prefix']
-bot = commands.Bot(command_prefix=get_prefix, owner_id=271612318947868673)
+bot = commands.Bot(command_prefix=get_prefix, owner_id=271612318947868673, case_insensitive=True)
 bot.remove_command('help')
 bot.config_prefix = config_file[did]['prefix']
 bot.config_token = secret_file['token']
@@ -210,6 +210,7 @@ async def embed(ctx, *, content:str):
     await ctx.message.delete()
 
 @bot.command()
+@commands.is_owner()
 async def rollbatch(ctx, *, times):
     member = ctx.author
     for i in range(2):
@@ -283,9 +284,21 @@ async def rollbatch(ctx, *, times):
             print("One downs \n -----")
         await ctx.send(embed=embed)
 
+@bot.command()
+@commands.is_owner()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def logout(ctx):
+    """Log the bot out of discord"""
+    botAdmin = checkBotAdmin(ctx)
+    if botAdmin == True:
+        await ctx.send("Logging out...")
+        print(f"{ctx.message.author} has logged the bot out")
+        await bot.logout()
+
 #custom commands - The Wheel
 @bot.command()#for times loop, random(1, sides). multiplier
 async def roll(ctx, times=None, sides=None, *, args=None):
+    await ctx.message.delete()
     member = ctx.author
     easy = []
     bool = False
